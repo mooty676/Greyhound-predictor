@@ -3,22 +3,34 @@ import requests
 from bs4 import BeautifulSoup
 
 def scrape_race_data(url):
-    res = requests.get(url)
-    soup = BeautifulSoup(res.text, "html.parser")
+    try:
+        res = requests.get(url)
+        soup = BeautifulSoup(res.text, "html.parser")
 
-    dog_rows = soup.select(".race-form-table tbody tr")
+        dog_rows = soup.select(".race-form-table tbody tr")
 
-    data = []
-    for row in dog_rows:
-        cols = row.find_all("td")
-        if len(cols) < 5:
-            continue
+        if not dog_rows:
+            return pd.DataFrame()
 
-        name = cols[1].get_text(strip=True)
-        box = cols[0].get_text(strip=True)
-        form = cols[2].get_text(strip=True)
-        time = cols[3].get_text(strip=True)
+        data = []
+        for row in dog_rows:
+            cols = row.find_all("td")
+            if len(cols) < 4:
+                continue
 
-        data.append({"Box": box, "Name": name, "Form": form, "Time": time})
+            box = cols[0].get_text(strip=True)
+            name = cols[1].get_text(strip=True)
+            form = cols[2].get_text(strip=True)
+            time = cols[3].get_text(strip=True)
 
-    return pd.DataFrame(data)
+            data.append({
+                "Box": box,
+                "Name": name,
+                "Form": form,
+                "Time": time
+            })
+
+        return pd.DataFrame(data)
+
+    except Exception as e:
+        return pd.DataFrame()
